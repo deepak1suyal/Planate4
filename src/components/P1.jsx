@@ -9,7 +9,7 @@ export default function P1() {
   useEffect(() => {
     // Scene setup
     const scene = new THREE.Scene();
-    
+    const spheresave=[];
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       25,
@@ -55,7 +55,7 @@ const spheres=new THREE.Group();
    texture.colorSpace=THREE.SRGBColorSpace;
     const material = new THREE.MeshStandardMaterial({map: texture});
     const sphere = new THREE.Mesh(geometry, material);
-   
+   spheresave.push(sphere);
     const angle=(i/4)*Math.PI*2;
     sphere.position.x=Math.cos(angle)*4.5;
     sphere.position.z=Math.sin(angle)*4.5;
@@ -79,20 +79,37 @@ const bigSphere = new THREE.Mesh(bigSphereGeometry, bigSphereMaterial);
 scene.add(bigSphere);
 
 
+    // Add throttled wheel event listener
+    let lastScrollTime = 0;
+    const scrollThrottleTime = 2000; // 2 seconds
 
-setInterval(()=>{
-  gsap.to(spheres.rotation, {
-    y: `+=${Math.PI/2}`,
-    duration: 2,
-    repeat: -1,
-    repeatDelay: 1,
-    ease: 'expo.easeInOut',
-  });
-},2000);
+    const handleWheel = (event) => {
+      const currentTime = Date.now();
+      if (currentTime - lastScrollTime >= scrollThrottleTime) {
+        lastScrollTime = currentTime;
+        
+        // Determine scroll direction
+        const direction = event.deltaY > 0 ? 1 : -1;
+        
+        // Rotate the spheres group
+        gsap.to(spheres.rotation,{
+          duration:1,
+          y:`-=${Math.PI/2}%`,
+          ease:"power2.inOut",
+        });
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel);
+
+const clock=new THREE.Clock();
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      
+      for(let i=0;i<spheresave.length;i++){
+        const sp=spheresave[i];
+        sp.rotation.y=clock.getElapsedTime()*0.01;
+      }
       controls.update();
       renderer.render(scene, camera);
     };
